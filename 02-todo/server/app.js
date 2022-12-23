@@ -1,53 +1,30 @@
-/* Importrerar nodemodulen express (installerad med npm), som är ett utbrett verktyg för att skapa och arbeta med webbservrar och hantera HTTP-förfrågningar i ett nodejs-backend. */
 const express = require('express');
-/* Skapar upp ett express-objekt, som i stort representerar en webbserver */
 const app = express();
-
-/* Importerar den inbyggda modulen fs */
 const fs = require('fs/promises');
-
 const PORT = 5000;
-/* Expressobjektet, kallat app, har metoden "use" som används för att sätta inställningar hos vår server */
 app
-  /* Man kan ange format etc. på de data som servern ska kunna ta emot och skicka. Metoderna json och urlencoded är inbyggda hos express */
+
   .use(express.json())
   .use(express.urlencoded({ extended: false }))
-  /* Man kan också ange vad som ska hända övergripande med samtliga förfrågningar. Alla förfrågningar kommer att gå genom nedanstående kod först, innan den behandlas vidare. */
   .use((req, res, next) => {
-    /* Det vill säga, alla response-objekt kommer att få nedanstående headers. */
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Headers', '*');
     res.header('Access-Control-Allow-Methods', '*');
-    /* För att göra så att servern ska kunna behandla förfrågan vidare, använder man funktionen next() som kommer som tredje parameter till denna callbackfunktion.  */
     next();
   });
 
-/* Express (som finns i variabeln app) har metoder för att specificera vad som ska hända vid olika HTTP-metoder. Man anropar metoden get() hos expressobjektet för att fånga upp förfrågningar med metoden GET - alltså en GET-förfrågan -  från en klient.  */
-
-/* .get tar emot
-  1. En route, som utgör en del av adressen/URL:en dit man kan skicka förfrågan. Man anger det som ska stå efter domän och port (vår server är konfigurerar som default att köra på localhost:5000), så här metod lyssnar man alltså efter GET-anrop till url:en localhost:5000/task
-  
-  Notera att route-namnen döps om i lektion 6. De ska heta tasks, inte task, men felet är enligt videorna inte tillrättat i detta skede, så jag lämnar kvar det. 
-
-  2. En callbackfunktion som kommer att köras när en sådan förfrågan görs. Callbackfunktionen tar (minst) två parametrar - ett requestobjekt och ett responseobjekt, som här kallas req och res. Callbackfunktionen är asynkron för att vi använder await inuti. */
 app.get('/tasks', async (req, res) => {
-  /* För enkel felhantering används try/catch */
   try {
-    /* Node har en inbyggd modul som heter fs (importerades i början av denna fil). Den används här för att försöka läsa innehållet i en fil vid namn tasks.json. Anropet är asynkront så man sätter await innan (och async innan callbackfunktionen i app.get().) */
     const tasks = await fs.readFile('./tasks.json');
-    /* Innehållet skickas tillbaka till klienten i ett standardresponse. Eftersom allt gick bra kan vi använda defaultinställningarna med statuskod 200 och statustext "ok". Vi kan kalla detta för ett success-response. Efter res.send är förfrågan färdigbehandlad och kopplingen mot servern kommer att stängas ned. */
     res.send(JSON.parse(tasks));
   } catch (error) {
-    /* Om någonting i ovanstående kod orsakade en krasch, fångas den här och man skickar istället ett response som har koden 500 (server error) och inkluderar felet, */
     res.status(500).send({ error });
   }
 });
-/* Express metod för att lyssna efter POST-anrop heter naturligt post(). I övrigt fungerar den likadant som  get */
+
 app.post('/tasks', async (req, res) => {
   try {
-    /* Alla data från klienten finns i req-objektet. I req.body finns alla data, alltså själva innehållet i förfrågan. I detta fall den uppgift som ska sparas ned. */
     const task = req.body;
-    /* Det befintliga innehållet i filen läses in och sparas till variabeln listBuffer. */
     const listBuffer = await fs.readFile('./tasks.json');
     /* Innehållet i filen är de uppgifter som hittills är sparade. För att kunna behandla listan av uppgifter i filen som JavaScript-objekt behövs JSON.parse. Parse används för att översätta en buffer eller text till JavaScript */
     const currentTasks = JSON.parse(listBuffer);
@@ -85,18 +62,10 @@ app.post('/tasks', async (req, res) => {
 app.delete('/tasks/:id', async (req, res) => {
   console.log(req);
   try {
-    /* För att nå egenskaper tagna ur url:en  använder man req.params och sedan namnet som man gett egenskapen, i detta fall id, då vi skrev :id. */
     const id = req.params.id;
-    /* På samma sätt som vid post, hämtas filens befintliga innehåll ut med hjälp av fs.readFile, som inväntas med await. */
     const listBuffer = await fs.readFile('./tasks.json');
-    /* Innehållet i filen parsas till JavaScript för att kunna behandlas vidare i kod. */
     const currentTasks = JSON.parse(listBuffer);
-    /* Först en kontroll om det ens finns något i filen, annars finns ju inget att ta bort */
     if (currentTasks.length > 0) {
-      /* Om det finns något i filen görs här en hel del i samma anrop: 
-      1. De befintliga uppgifterna (currentTasks), filtreras så att den uppgift med det id som skickades in filtreras bort och endast de uppgifter som inte hade det id:t är kvar.
-      2. Arrayen med alla uppgifter utom den med det id som skickades in görs om till en sträng med JSON.stringify
-      3. Denna sträng sparas slutgilgingen till filen tasks.json, så att det kommer att finnas en uppdaterad lista som inte längre innehåller uppgiften med det id som skickades in via url:en. */
       await fs.writeFile(
         './tasks.json',
         JSON.stringify(currentTasks.filter((task) => task.id != id))
@@ -108,15 +77,23 @@ app.delete('/tasks/:id', async (req, res) => {
       res.status(404).send({ error: 'Ingen uppgift att ta bort' });
     }
   } catch (error) {
-    /* Om något annat fel uppstår, skickas statuskod 500, dvs. ett generellt serverfel, tillsammans med information om felet.  */
     res.status(500).send({ error: error.stack });
   }
 });
 
 /***********************Labb 2 ***********************/
-/* Här skulle det vara lämpligt att skriva en funktion som likt post eller delete tar kan hantera PUT- eller PATCH-anrop (du får välja vilket, läs på om vad som verkar mest vettigt för det du ska göra) för att kunna markera uppgifter som färdiga. Den nya statusen - completed true eller falase - kan skickas i förfrågans body (req.body) tillsammans med exempelvis id så att man kan söka fram en given uppgift ur listan, uppdatera uppgiftens status och till sist spara ner listan med den uppdaterade uppgiften */
+/* Här skulle det vara lämpligt att skriva en funktion som likt post eller delete tar kan hantera PUT- eller PATCH-anrop 
+(du får välja vilket, läs på om vad som verkar mest vettigt för det du ska göra) för att kunna markera uppgifter som färdiga. Den nya statusen - 
+completed true eller falase - kan skickas i förfrågans body (req.body) tillsammans med exempelvis id så att man kan söka fram en given uppgift ur listan, 
+uppdatera uppgiftens status och till sist spara ner listan med den uppdaterade uppgiften */
 
-/* Observera att all kod rörande backend för labb 2 ska skrivas i denna fil och inte i app.node.js. App.node.js är bara till för exempel från lektion 5 och innehåller inte någon kod som används vidare under lektionerna. */
+/* Observera att all kod rörande backend för labb 2 ska skrivas i denna fil och inte i app.node.js. 
+App.node.js är bara till för exempel från lektion 5 och innehåller inte någon kod som används vidare under lektionerna. */
+
+
+
+
+
 /***********************Labb 2 ***********************/
 
 /* Med app.listen säger man åte servern att starta. Första argumentet är port - dvs. det portnummer man vill att servern ska köra på. Det sattes till 5000 på rad 9. Det andra argumentet är en anonym arrow-funktion som körs när servern har lyckats starta. Här skrivs bara ett meddelande ut som berättar att servern kör, så att man får feedback på att allt körts igång som det skulle. */

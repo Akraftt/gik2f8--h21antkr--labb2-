@@ -1,4 +1,3 @@
-/* Import av nodejs inbyggda modul för att hantera http-förfrågningar. Vi använder i slutänden express till att utföra dessa saker, men de går att göra utan det externa paketet express.  */
 const http = require('http');
 
 /* Med http-modulens metod createServer kan man skapa en server som lyssnar efter anrop. Den tar emot en callbackfunktion (här en anonym arrow-funktion) som får parametrarna req (objekt som representerar HTTP-förfrågan) och res (objekt som representerar HTTP-svar) */
@@ -20,5 +19,3 @@ const server = http.createServer((req, res) => {
 server.listen('5000', () =>
   console.log('Server running on http://localhost:5000')
 );
-
-/* Denna fil används inte vidare utan är en del av exemplen från lektion 5. All kod som används vidare i applikationen finns i app.js. Det är också där ni ska skriva kod för labb 2 */
