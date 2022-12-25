@@ -90,7 +90,29 @@ uppdatera uppgiftens status och till sist spara ner listan med den uppdaterade u
 /* Observera att all kod rörande backend för labb 2 ska skrivas i denna fil och inte i app.node.js. 
 App.node.js är bara till för exempel från lektion 5 och innehåller inte någon kod som används vidare under lektionerna. */
 
+app.put('/tasks', async (request, response) => {
+  const originalTask = request.body;
+  
+  // skapa en kopia av task
+  const updatedTask = {
+    id: originalTask.id,
+    title: originalTask.title,
+    description: originalTask.description,
+    dueDate: originalTask.dueDate,
+    completed: originalTask.completed
+  };
 
+  try {
+    const currentTaskList = await fs.readFile('./tasks.json');                      // läser current task list från taks.json
+    const currentTasks = JSON.parse(currentTaskList);                               // prse JSON till jJavascriptObject
+    const filteredTasks = currentTasks.filter(task => task.id != updatedTask.id);   // Nya lista med updated, filter orginal och lägger till updated task
+    const newTaskList = [...filteredTasks, updatedTask];                            
+    await fs.writeFile('./tasks.json', JSON.stringify(newTaskList));                // skriver nya task list till tasks.json
+    response.send(updatedTask);                                                     // skickar updated task back till client
+  } catch (err) {
+    console.log(err.stack);                                                         // log ifall det blir någon form utav errors.
+  }
+});
 
 
 

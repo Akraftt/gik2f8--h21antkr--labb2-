@@ -149,7 +149,22 @@ Om du hittar något annat sätt som funkar för dig, använd för all del det, s
 en callbackfunktion som ska hantera det som kommer tillbaka från servern via vår api-klass. Inuti den funktionen bör listan med uppgifter renderas på nytt, 
 så att den nyligen gjorda förändringen syns. */
 
+async function updateOnChange(update) {
+  const task = update.parentElement;
+  const titleNode = task.childNodes[1].childNodes[1];                     // referens till child nodes med title, due date, osv
+  const dueDateNode = task.childNodes[1].childNodes[3].childNodes[1];
+  const descriptionNode = task.childNodes[3];
 
+  const taskData = {
+    id: parseInt(task.id),
+    title: titleNode.textContent,
+    description: descriptionNode.textContent,
+    dueDate: dueDateNode.textContent,
+    completed: update.checked
+  };
+
+  api.update(taskData).then(() => renderList());
+}
 
 
 /***********************Labb 2 ***********************/

@@ -80,5 +80,14 @@ class Api {
   Alternativ 2: request-objektets body består bara av förändringarna och vilken uppgift som ska förändras. Exempel: {id: 1, completed: true/false }
   Om du hittar något annat sätt som funkar för dig, använd för all del det, så länge det uppnår samma sak. :) */
 
-  /***********************Labb 2 ***********************/
-}
+  async update(data) {
+    const response = new Request('http://localhost:5000/tasks', {
+      method: 'PUT',
+      headers: {
+        'Content-type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+    return response;
+  }}
+
